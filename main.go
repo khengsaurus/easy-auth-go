@@ -1,4 +1,4 @@
-package middlewares
+package easyAuth
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/khengsaurus/easy-auth-middlewares/consts"
-	"github.com/khengsaurus/easy-auth-middlewares/types"
+	"github.com/khengsaurus/easy-auth-go/consts"
+	"github.com/khengsaurus/easy-auth-go/types"
 )
 
 type validateRes struct {
@@ -54,7 +54,7 @@ func validateToken(token string, version int, apiKey string) (*types.User, error
 // Param silent=true: if header value is missing, invalid, or fails to retrieve user info, will not raise an error.
 //
 // Param silent=false: if header value is missing or invalid, will write a 401 response. If user info cannot be retrieved for other reasons, will write a 500 response.
-func WithUserToken(apiKey string, version int, silent bool) func(http.Handler) http.Handler {
+func WithEaUser(apiKey string, version int, silent bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get(consts.HeaderUserToken)
@@ -85,4 +85,12 @@ func WithUserToken(apiKey string, version int, silent bool) func(http.Handler) h
 			}
 		})
 	}
+}
+
+func GetEaUser(ctx context.Context) (*types.User, error) {
+	user, ok := ctx.Value(consts.ContextKeyUser).(*types.User)
+	if !ok || user.Id == "" || user.Username == "" {
+		return nil, fmt.Errorf(consts.ErrorUserInfoMissing)
+	}
+	return user, nil
 }
